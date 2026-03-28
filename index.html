@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easter.html — nothing to see here</title>
+<!-- 🥚 you weren't supposed to find this -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #07071a;
+  --text: #ddd6fe;
+  --gold:  #fbbf24;
+  --pink:  #f472b6;
+  --cyan:  #22d3ee;
+  --mint:  #4ade80;
+  --lav:   #c084fc;
+  --coral: #fb7185;
+}
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  overflow: hidden;
+  font-family: 'Press Start 2P', monospace;
+  color: var(--text);
+  cursor: crosshair;
+  position: relative;
+}
+
+/* ---- STARS ---- */
+.star-layer {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  width: 1px; height: 1px;
+  border-radius: 50%;
+}
+#s1 { animation: twink1 3.1s ease-in-out infinite alternate; }
+#s2 { animation: twink1 4.7s ease-in-out infinite alternate-reverse; opacity: .6; }
+@keyframes twink1 { from { opacity: .2 } to { opacity: 1 } }
+
+/* ---- HUD ---- */
+#counter {
+  position: fixed; top: 22px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--text); opacity: .5;
+  z-index: 10;
+  transition: opacity .4s;
+}
+#hint {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px; letter-spacing: 1px;
+  color: var(--text); opacity: .25;
+  z-index: 10;
+  white-space: nowrap;
+  animation: breathe 2.8s ease-in-out infinite;
+}
+@keyframes breathe { 0%,100%{opacity:.15} 50%{opacity:.5} }
+
+/* ---- EGG ---- */
+.egg {
+  position: fixed;
+  width: 66px; height: 86px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 20px;
+  user-select: none;
+  overflow: hidden;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), filter .2s;
+  animation: floatIn .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+.egg::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(160deg, rgba(255,255,255,.22) 0%, transparent 55%);
+  pointer-events: none;
+}
+.egg .band {
+  position: absolute; width: 100%; height: 14px; top: 42%;
+  background: rgba(255,255,255,.18);
+}
+.egg .sym {
+  position: relative; z-index: 2;
+  color: rgba(0,0,0,.45); font-size: 18px; letter-spacing: -1px;
+}
+.egg:hover:not(.cracking):not(.gone) {
+  transform: rotate(calc(var(--tilt) + 5deg)) scale(1.14) !important;
+  filter: brightness(1.18);
+}
+.egg.cracking { animation: crack .38s ease both; }
+.egg.gone {
+  opacity: 0;
+  transform: scale(.1) translateY(-40px) rotate(30deg) !important;
+  transition: all .55s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+@keyframes floatIn {
+  from { opacity:0; transform: rotate(var(--tilt)) translateY(30px) scale(.7); }
+  to   { opacity:1; transform: rotate(var(--tilt)) scale(1); }
+}
+@keyframes crack {
+  0%   { transform: rotate(var(--tilt)) scale(1); }
+  20%  { transform: rotate(calc(var(--tilt) - 14deg)) scale(1.1); }
+  40%  { transform: rotate(calc(var(--tilt) + 14deg)) scale(1.1); }
+  65%  { transform: rotate(calc(var(--tilt) - 6deg)) scale(1.05); }
+  85%  { transform: rotate(calc(var(--tilt) + 4deg)) scale(1.02); }
+  100% { transform: rotate(var(--tilt)) scale(1); }
+}
+
+/* ---- MESSAGE BUBBLE ---- */
+.bubble {
+  position: fixed;
+  max-width: 240px;
+  background: rgba(10,9,30,.97);
+  border: 1px solid rgba(200,180,255,.18);
+  border-radius: 18px;
+  padding: 16px 18px;
+  z-index: 20;
+  font-family: 'Lora', serif;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(.88) translateY(6px);
+  transform-origin: bottom center;
+  transition: all .32s cubic-bezier(.34,1.56,.64,1);
+}
+.bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+.bubble.bye  { opacity: 0; transform: scale(.9) translateY(-18px); transition: all .22s ease; }
+.bubble .bico { font-size: 26px; display: block; margin-bottom: 7px; font-style: normal; }
+
+/* ---- CONFETTI ---- */
+.cf {
+  position: fixed; border-radius: 2px;
+  pointer-events: none; z-index: 35;
+  animation: confettiFall var(--d) ease-in var(--delay) both;
+}
+@keyframes confettiFall {
+  0%   { transform: translateX(0) rotate(0deg);   opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(var(--tx)) translateY(110vh) rotate(var(--r)); opacity: 0; }
+}
+
+/* ---- VICTORY ---- */
+#victory {
+  position: fixed; inset: 0;
+  background: rgba(7,7,26,.96);
+  z-index: 50;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px; padding: 32px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .9s ease;
+}
+#victory.show { opacity: 1; pointer-events: auto; }
+#victory .v-title {
+  font-size: clamp(11px,3vw,17px);
+  color: var(--gold);
+  text-align: center;
+  line-height: 2;
+  letter-spacing: 1px;
+}
+#victory .v-poem {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: clamp(14px,3vw,18px);
+  color: var(--text);
+  text-align: center;
+  max-width: 380px;
+  line-height: 1.85;
+  opacity: .88;
+}
+#victory .v-commit {
+  font-size: 8px;
+  opacity: .35;
+  letter-spacing: 1.5px;
+}
+</style>
+</head>
+<body>
+
+<div id="counter">eggs found: 0 / 6</div>
+<div id="hint">something is hiding here &nbsp;— &nbsp;look closer</div>
+
+<div id="victory">
+  <div class="v-title">🥚 &nbsp; ALL EGGS FOUND &nbsp; 🥚</div>
+  <div class="v-poem">
+    Happy Easter, dear developer.<br>
+    You've successfully debugged life today.
+  </div>
+  <div class="v-commit">// git commit -m "found joy"</div>
+</div>
+
+<script>
+// ---- STARS ----
+function makeStarLayer(id, count, color) {
+  const el = document.createElement('div');
+  el.id = id; el.className = 'star-layer';
+  let sh = '';
+  for (let i = 0; i < count; i++) {
+    const x = Math.floor(Math.random() * 2000);
+    const y = Math.floor(Math.random() * 2000);
+    sh += `${x}px ${y}px ${color}${i < count-1 ? ',' : ''}`;
+  }
+  el.style.boxShadow = sh;
+  document.body.prepend(el);
+}
+makeStarLayer('s1', 220, '#fff');
+makeStarLayer('s2', 100, '#c4b5fd');
+
+// ---- EGG DATA ----
+const EGGS = [
+  {
+    id: 0, color: '#fbbf24', bandAlpha: .25, sym: '{ }',
+    top: '13%', left: '8%', tilt: '-9deg', delay: '0s',
+    ico: '✨',
+    msg: 'Curly braces contain multitudes.\nThis one holds joy.'
+  },
+  {
+    id: 1, color: '#f472b6', bandAlpha: .22, sym: '//',
+    top: '61%', left: '6%', tilt: '7deg', delay: '.15s',
+    ico: '💤',
+    msg: '// TODO: Enjoy today.\n//       Rest can wait.'
+  },
+  {
+    id: 2, color: '#22d3ee', bandAlpha: .2, sym: '01',
+    top: '16%', left: '77%', tilt: '11deg', delay: '.08s',
+    ico: '🔢',
+    msg: '01000101 01100111 01100111\n→ spells "Egg"\n\nBinary hides the best surprises.'
+  },
+  {
+    id: 3, color: '#4ade80', bandAlpha: .2, sym: 'Δ',
+    top: '70%', left: '81%', tilt: '-7deg', delay: '.25s',
+    ico: '🌱',
+    msg: 'Every minimum spanning tree\nhas edges that matter.\n\nSo does yours.'
+  },
+  {
+    id: 4, color: '#c084fc', bandAlpha: .22, sym: '∀',
+    top: '40%', left: '43%', tilt: '4deg', delay: '.12s',
+    ico: '🧩',
+    msg: '∀ day ∈ semester :\n  find_one_moment_of_peace()'
+  },
+  {
+    id: 5, color: '#fb7185', bandAlpha: .2, sym: '✦',
+    top: '87%', left: '53%', tilt: '-5deg', delay: '.32s',
+    ico: '🫡',
+    msg: 'You found the secret egg.\nThat kind of curiosity?\nIt\'ll take you very far.',
+    small: true
+  }
+];
+
+let found = 0;
+
+// ---- BUILD EGGS ----
+EGGS.forEach(e => {
+  const el = document.createElement('div');
+  el.className = 'egg';
+  el.id = `egg${e.id}`;
+
+  const small = e.small;
+  el.style.cssText = `
+    background: ${e.color};
+    top: ${e.top}; left: ${e.left};
+    --tilt: ${e.tilt};
+    transform: rotate(${e.tilt});
+    animation-delay: ${e.delay};
+    ${small ? 'width:44px;height:57px;font-size:14px;opacity:0.55;' : ''}
+  `;
+
+  const band = document.createElement('div');
+  band.className = 'band';
+  band.style.background = `rgba(0,0,0,${e.bandAlpha})`;
+  el.appendChild(band);
+
+  const sym = document.createElement('span');
+  sym.className = 'sym';
+  sym.textContent = e.sym;
+  el.appendChild(sym);
+
+  el.addEventListener('click', () => handleClick(e, el));
+  document.body.appendChild(el);
+});
+
+// ---- CRACK LOGIC ----
+function handleClick(data, el) {
+  if (el.classList.contains('cracking') || el.classList.contains('gone')) return;
+  el.classList.add('cracking');
+
+  setTimeout(() => {
+    el.classList.remove('cracking');
+    el.classList.add('gone');
+    showBubble(data, el);
+    found++;
+    const counter = document.getElementById('counter');
+    counter.textContent = `eggs found: ${found} / 6`;
+    counter.style.opacity = '.85';
+    setTimeout(() => counter.style.opacity = '.5', 900);
+    if (found === 6) setTimeout(doVictory, 1100);
+  }, 380);
+}
+
+// ---- BUBBLE ----
+function showBubble(data, eggEl) {
+  const r = eggEl.getBoundingClientRect();
+  const b = document.createElement('div');
+  b.className = 'bubble';
+
+  b.innerHTML = `<span class="bico">${data.ico}</span>${data.msg.split('\n').join('<br>')}`;
+
+  let top  = r.top - 10;
+  let left = r.left + r.width / 2 - 60;
+  b.style.top  = top  + 'px';
+  b.style.left = left + 'px';
+  document.body.appendChild(b);
+
+  requestAnimationFrame(() => {
+    b.classList.add('show');
+    const br = b.getBoundingClientRect();
+    if (br.right  > window.innerWidth  - 12) b.style.left = (window.innerWidth  - br.width - 12) + 'px';
+    if (br.left   < 12)                       b.style.left = '12px';
+    if (br.top    < 12)                       b.style.top  = (r.bottom + 8) + 'px';
+    if (br.bottom > window.innerHeight - 12)  b.style.top  = (window.innerHeight - br.height - 12) + 'px';
+  });
+
+  setTimeout(() => {
+    b.classList.add('bye');
+    setTimeout(() => b.remove(), 260);
+  }, 3600);
+}
+
+// ---- VICTORY ----
+function doVictory() {
+  const COLORS = ['#fbbf24','#f472b6','#22d3ee','#4ade80','#c084fc','#fb7185','#fff'];
+  for (let i = 0; i < 130; i++) {
+    const c = document.createElement('div');
+    c.className = 'cf';
+    const col   = COLORS[i % COLORS.length];
+    const tx    = ((Math.random() - .5) * 320).toFixed(0) + 'px';
+    const r     = (Math.random() * 700).toFixed(0) + 'deg';
+    const d     = (2.4 + Math.random() * 2.2).toFixed(2) + 's';
+    const delay = (Math.random() * .8).toFixed(2) + 's';
+    const size  = (6 + Math.random() * 9).toFixed(0);
+    c.style.cssText = `
+      background:${col};
+      left:${(Math.random()*100).toFixed(1)}vw; top:-10px;
+      width:${size}px; height:${size}px;
+      border-radius:${Math.random() > .45 ? '50%' : '2px'};
+      --tx:${tx}; --r:${r}; --d:${d}; --delay:${delay};
+    `;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), (parseFloat(d) + parseFloat(delay)) * 1000 + 200);
+  }
+
+  document.getElementById('hint').style.display = 'none';
+  document.getElementById('counter').style.display = 'none';
+  document.getElementById('victory').classList.add('show');
+}
+</script>
+</body>
+</html>
