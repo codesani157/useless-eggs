@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seasons of India — 2026</title>
+    <!-- CSS will be added in the next chunk -->
+    <style>
+        /* placeholder – will be filled in Chunk 2 */
+      
+/* =============================================
+   CHUNK 2 – CSS Foundation & Atmosphere
+   Integrate this inside the <head> of index.html
+   ============================================= */
+
+/* ----- Custom Properties (Design Tokens) ----- */
+:root {
+    --gold: #c9a55e;
+    --gold-light: #e0c97f;
+    --gold-dark: #8b6914;
+    --cream: #faf7f0;
+    --deep-charcoal: #1a1a1a;
+
+    /* Typography */
+    --font-display: 'Georgia', 'Times New Roman', 'Noto Serif Devanagari', serif;
+    --font-body: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+
+    /* Spacing */
+    --dot-size: 8px;
+}
+
+/* ----- Global Reset & Base ----- */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0a0a0a;
+}
+
+body {
+    font-family: var(--font-body);
+    overflow-x: hidden;          /* prevent horizontal scroll from canvas edges */
+    background: #0a0a0a;
+    height: 600vh;               /* 4 seasons × ~150vh each → infinite scroll illusion */
+    position: relative;
+    cursor: crosshair;           /* subtle luxury pointer */
+}
+
+/* ----- Fixed 3D Canvas ----- */
+#three-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;        /* allow scrolling / clicking through it */
+}
+
+/* ----- Cinematic Overlays ----- */
+/* Vignette: darkens edges, draws focus to centre */
+.vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 55%,
+        rgba(6, 4, 2, 0.35) 75%,
+        rgba(2, 1, 0, 0.7) 100%
+    );
+    mix-blend-mode: multiply;
+}
+
+/* Film grain: subtle noise texture for premium analog feel */
+.grain {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+}
+
+/* ----- Season Title Overlay ----- */
+.season-title-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;        /* no interaction with text */
+    text-align: center;
+    transition: opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.season-title {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 8vw, 9rem);
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    line-height: 1.05;
+    color: #faf7f0;
+    text-shadow:
+        0 0 120px rgba(201, 165, 94, 0.5),
+        0 0 40px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.season-subtitle {
+    font-family: var(--font-body);
+    font-size: clamp(0.85rem, 1.5vw, 1.2rem);
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #d4b87a;
+    margin-top: 0.5rem;
+    text-shadow: 0 0 30px rgba(180, 140, 80, 0.5);
+    transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.season-sanskrit {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.2vw, 2rem);
+    color: var(--gold);
+    margin-top: 1.5rem;
+    letter-spacing: 0.08em;
+    opacity: 0.8;
+    transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ----- Scroll Indicator Dots ----- */
+.scroll-indicator {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    pointer-events: none;
+}
+
+.scroll-dot {
+    width: var(--dot-size);
+    height: var(--dot-size);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+    position: relative;
+}
+
+/* Active dot glow */
+.scroll-dot.active {
+    background: var(--gold);
+    box-shadow: 0 0 16px rgba(201, 165, 94, 0.7);
+    width: calc(var(--dot-size) + 2px);
+    height: calc(var(--dot-size) + 2px);
+    margin-left: -1px;         /* keep it centred */
+}
+
+/* Pulsing ring around active dot (optional, for later) */
+.scroll-dot.active::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(201, 165, 94, 0.5);
+    animation: dotPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+    0%, 100% {
+        inset: -8px;
+        opacity: 0.4;
+    }
+    50% {
+        inset: -16px;
+        opacity: 0;
+    }
+}
+
+/* ----- Footnote (Bottom Journey Conclusion) ----- */
+.footnote {
+    position: absolute;          /* scrolls with the page body */
+    bottom: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    text-align: center;
+    pointer-events: auto;
+    padding: 3rem 2.5rem;
+    opacity: 0;                  /* hidden initially, JS fades in */
+    transition: opacity 1.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    max-width: 700px;
+    width: 90%;
+}
+
+.footnote.visible {
+    opacity: 1;
+}
+
+/* Decorative top line */
+.footnote-ornament {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--gold) 20%,
+        var(--gold-light) 50%,
+        var(--gold) 80%,
+        transparent
+    );
+    margin: 0 auto 2rem;
+    position: relative;
+}
+
+/* Diamond accents on the ornament */
+.footnote-ornament::before,
+.footnote-ornament::after {
+    content: '◆';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-size: 0.55rem;
+}
+.footnote-ornament::before { left: -28px; }
+.footnote-ornament::after { right: -28px; }
+
+.footnote-text {
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 2vw, 1.6rem);
+    color: #e8dcc8;
+    letter-spacing: 0.06em;
+    line-height: 1.7;
+    margin-bottom: 0.8rem;
+}
+
+.footnote-sub {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8b7a5e;
+}
+
+/* Circular seal with Om symbol */
+.footnote-seal {
+    display: inline-block;
+    width: 56px;
+    height: 56px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    margin: 1.5rem auto 0;
+    position: relative;
+    animation: sealGlow 4s ease-in-out infinite;
+}
+
+.footnote-seal::after {
+    content: 'ॐ';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: var(--gold);
+    font-family: var(--font-display);
+}
+
+@keyframes sealGlow {
+    0%, 100% {
+        box-shadow:
+            0 0 20px rgba(201, 165, 94, 0.3),
+            inset 0 0 20px rgba(201, 165, 94, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 40px rgba(201, 165, 94, 0.6),
+            inset 0 0 35px rgba(201, 165, 94, 0.2);
+    }
+}
+
+/* ----- Responsive Adjustments (Mobile / Tablet) ----- */
+@media (max-width: 768px) {
+    .scroll-indicator {
+        right: 0.8rem;
+        gap: 1.1rem;
+    }
+
+    .scroll-dot {
+        width: 5px;
+        height: 5px;
+    }
+
+    .scroll-dot.active {
+        width: 7px;
+        height: 7px;
+    }
+
+    .season-title {
+        font-size: clamp(2.2rem, 7vw, 5rem);
+    }
+
+    .footnote {
+        padding: 2rem 1.5rem;
+        bottom: 8vh;
+    }
+
+    body {
+        cursor: auto;          /* touch devices don't need crosshair */
+    }
+}
+
+        
+    </style>
+</head>
+<body>
+    <!-- 3D rendering surface (behind everything, fixed) -->
+    <canvas id="three-canvas"></canvas>
+
+    <!-- Cinematic overlays (always visible, no interaction) -->
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <!-- Central season title (fixed, updates via JS) -->
+    <div class="season-title-container" id="seasonTitleContainer">
+        <div class="season-title" id="seasonTitle">Grishma</div>
+        <div class="season-subtitle" id="seasonSubtitle">The Scorching Embrace</div>
+        <div class="season-sanskrit" id="seasonSanskrit">ग्रीष्म ऋतु</div>
+    </div>
+
+    <!-- Scroll progress indicator (four dots) -->
+    <div class="scroll-indicator" id="scrollIndicator">
+        <div class="scroll-dot active" data-index="0"></div>
+        <div class="scroll-dot" data-index="1"></div>
+        <div class="scroll-dot" data-index="2"></div>
+        <div class="scroll-dot" data-index="3"></div>
+    </div>
+
+    <!-- Footnote that fades in at the very bottom -->
+    <div class="footnote" id="footnote">
+        <div class="footnote-ornament"></div>
+        <p class="footnote-text">
+            You have journeyed through the soul of a land<br>
+            where time is measured in seasons,<br>
+            and every turn of the earth sings a new raga.
+        </p>
+        <p class="footnote-sub">The Cycle Completes &amp; Begins Anew</p>
+        <div class="footnote-seal"></div>
+    </div>
+
+    <!-- Three.js ES module import map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <!-- The main JavaScript module will be added in later chunks -->
+    <script type="module">
+// =============================================
+// CHUNK 3 – Three.js Scene Initialization
+// Paste this right after the import map in your <body>
+// =============================================
+
+import * as THREE from 'three';
+
+// ── Grab the canvas element ──
+const canvas = document.getElementById('three-canvas');
+
+// ── Renderer ──
+const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true                // transparent canvas, we rely on CSS background + fog
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // cap for performance
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;          // cinematic colour mapping
+renderer.toneMappingExposure = 1.2;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;            // softer shadows
+
+// ── Scene ──
+const scene = new THREE.Scene();
+
+// ── Camera ──
+const camera = new THREE.PerspectiveCamera(
+    55,                                      // field of view
+    window.innerWidth / window.innerHeight,  // aspect ratio
+    0.1,                                     // near plane
+    100                                      // far plane
+);
+camera.position.set(0, 0.5, 8);             // slightly above centre, 8 units back
+camera.lookAt(0, 0, 0);
+
+// ── Ambient Light (soft overall illumination) ──
+const ambientLight = new THREE.AmbientLight('#fff5e8', 0.9);
+scene.add(ambientLight);
+
+// ── Key Light (main directional sun) ──
+const keyLight = new THREE.DirectionalLight('#fffaf0', 2.5);
+keyLight.position.set(5, 3, 6);   // front‑right‑top
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 1024;
+keyLight.shadow.mapSize.height = 1024;
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 50;
+keyLight.shadow.bias = -0.0001;
+keyLight.shadow.normalBias = 0.02;
+scene.add(keyLight);
+
+// ── Rim Light (back‑left, adds depth) ──
+const rimLight = new THREE.DirectionalLight('#ffd9a3', 1.2);
+rimLight.position.set(-3, -1, -2);
+scene.add(rimLight);
+
+// ── Top Point Light (highlight from above) ──
+const topLight = new THREE.PointLight('#ffe8cc', 4, 15, 1.5);
+topLight.position.set(0, 5, 2);
+scene.add(topLight);
+
+// ── Initial Scene Background & Fog ──
+// These will be updated dynamically per season, but set a default
+scene.background = new THREE.Color('#1a0c04');     // warm summer‑ish dark
+scene.fog = new THREE.Fog('#3d1e08', 3.5, 18);     // matching fog
+
+// ── Handle window resize ──
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── Placeholder animation loop (will be expanded in later chunks) ──
+      // =============================================
+// CHUNK 4 – The Golden Mandala (3D Geometry)
+// Insert AFTER the scene fog setup, BEFORE animate()
+// =============================================
+
+// ── Mandala Group (all pieces will rotate together) ──
+const mandalaGroup = new THREE.Group();
+scene.add(mandalaGroup);
+
+// ── 1. Central Icosahedron ──
+const icoGeom = new THREE.IcosahedronGeometry(0.55, 1); // radius 0.55, detail 1 (subdivided once)
+const icoMat = new THREE.MeshStandardMaterial({
+    color: '#d4af37',          // rich gold
+    metalness: 0.85,
+    roughness: 0.2,
+    emissive: '#c97020',       // warm glow (will be updated per season)
+    emissiveIntensity: 0.35
+});
+const icoMesh = new THREE.Mesh(icoGeom, icoMat);
+icoMesh.castShadow = true;
+icoMesh.receiveShadow = true;
+mandalaGroup.add(icoMesh);
+
+// ── 2. Outer Wireframe Shell (ethereal, sacred geometry) ──
+const wireIcoGeom = new THREE.IcosahedronGeometry(0.72, 0); // detail 0 -> sharper edges
+const wireIcoMat = new THREE.MeshBasicMaterial({
+    color: '#e0c97f',          // lighter gold
+    wireframe: true,
+    transparent: true,
+    opacity: 0.35
+});
+const wireIco = new THREE.Mesh(wireIcoGeom, wireIcoMat);
+mandalaGroup.add(wireIco);
+
+// ── 3. Three Torus Rings (orbital paths) ──
+const torusRings = [];          // keep references for later animations
+const ringConfigs = [
+    { radius: 1.05, tube: 0.025, rotation: [Math.PI / 2.2, 0.3, 0] },
+    { radius: 1.20, tube: 0.018, rotation: [Math.PI / 1.7, -0.5, 0.6] },
+    { radius: 1.35, tube: 0.022, rotation: [Math.PI / 3, 0.8, -0.4] }
+];
+
+ringConfigs.forEach((cfg) => {
+    const torusGeom = new THREE.TorusGeometry(cfg.radius, cfg.tube, 128, 64);
+    const torusMat = new THREE.MeshStandardMaterial({
+        color: '#c9a55e',
+        metalness: 0.9,
+        roughness: 0.15,
+        emissive: '#c9a55e',    // subtle self‑illumination
+        emissiveIntensity: 0.2
+    });
+    const torus = new THREE.Mesh(torusGeom, torusMat);
+    torus.rotation.set(...cfg.rotation);
+    torus.castShadow = true;
+    torus.receiveShadow = true;
+    mandalaGroup.add(torus);
+    torusRings.push(torus);
+});
+
+// ── 4. Orbiting Mini Spheres (12, like the months / zodiac) ──
+const orbitingSpheres = [];
+for (let i = 0; i < 12; i++) {
+    const sphereGeom = new THREE.SphereGeometry(0.06, 16, 16);
+    const sphereMat = new THREE.MeshStandardMaterial({
+        color: '#f0d78c',
+        metalness: 0.7,
+        roughness: 0.2,
+        emissive: '#ffd700',
+        emissiveIntensity: 0.4
+    });
+    const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+    sphere.castShadow = true;
+    sphere.receiveShadow = true;
+
+    // Store randomised orbit parameters on the object itself
+    sphere.userData = {
+        orbitRadius: 1.55 + Math.random() * 0.5,
+        orbitSpeed: 0.15 + Math.random() * 0.4,
+        orbitPhase: Math.random() * Math.PI * 2,
+        orbitY: (Math.random() - 0.5) * 1.8       // vertical offset for 3D feel
+    };
+
+    mandalaGroup.add(sphere);
+    orbitingSpheres.push(sphere);
+}
+      // =============================================
+// CHUNK 5 – Seasonal Particle Systems
+// Paste AFTER the mandala code (Chunk 4) and BEFORE the animate() function
+// =============================================
+
+// ── Particle Group (holds all particle systems) ──
+const particleGroup = new THREE.Group();
+scene.add(particleGroup);
+
+// ── Storage for all four systems ──
+const particleSystems = {};
+
+// ── Particle Factory Function ──
+function createParticleSystem(count, color1, color2, sizeRange, name) {
+    // Arrays for geometry attributes
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    // Arrays for custom animation (not GPU attributes)
+    const velocities = new Float32Array(count * 3);
+    const basePositions = new Float32Array(count * 3);
+
+    const c1 = new THREE.Color(color1);
+    const c2 = new THREE.Color(color2);
+
+    for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+
+        // Random position in a large volume around the mandala
+        const x = (Math.random() - 0.5) * 10;
+        const y = (Math.random() - 0.5) * 8;
+        const z = (Math.random() - 0.5) * 6;
+        positions[i3] = x;
+        positions[i3 + 1] = y;
+        positions[i3 + 2] = z;
+
+        // Save initial positions for resetting / motion reference
+        basePositions[i3] = x;
+        basePositions[i3 + 1] = y;
+        basePositions[i3 + 2] = z;
+
+        // Random velocity (direction & speed) – will be used per season style
+        velocities[i3] = (Math.random() - 0.5) * 0.3;
+        velocities[i3 + 1] = (Math.random() - 0.5) * 0.5;
+        velocities[i3 + 2] = (Math.random() - 0.5) * 0.3;
+
+        // Colour blending between two seasonal tones
+        const mix = Math.random();
+        const col = c1.clone().lerp(c2, mix);
+        colors[i3] = col.r;
+        colors[i3 + 1] = col.g;
+        colors[i3 + 2] = col.b;
+
+        // Random size within given range
+        sizes[i] = sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]);
+    }
+
+    // Geometry
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    // Material: additive blending for glowing effect, no depth write for soft layering
+    const mat = new THREE.PointsMaterial({
+        size: 0.04,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+        opacity: 0,              // starts invisible, toggled by scroll
+        sizeAttenuation: true    // particles smaller at distance
+    });
+
+    const points = new THREE.Points(geom, mat);
+    points.frustumCulled = false; // ensure particles always visible
+    particleGroup.add(points);
+
+    // Return system object with all necessary data for animation
+    const system = {
+        points,
+        velocities,
+        basePositions,
+        count,
+        sizeRange,
+        targetOpacity: 0,
+        currentOpacity: 0,
+        name
+    };
+    particleSystems[name] = system;
+    return system;
+}
+
+// ── Instantiate the Four Seasonal Systems ──
+// 1. Summer: Golden heat particles, rising upward (dust / loo winds)
+createParticleSystem(
+    600,                // particle count
+    '#f4a742',          // warm orange
+    '#e8732a',          // deep burnt orange
+    [0.02, 0.08],       // size range
+    'summer'
+);
+
+// 2. Monsoon: Blue-white rain streaks
+createParticleSystem(
+    700,
+    '#7ec8e3',          // light blue
+    '#1e5f74',          // dark teal
+    [0.015, 0.06],
+    'monsoon'
+);
+
+// 3. Autumn: Warm diya/firefly sparkles, floating
+createParticleSystem(
+    550,
+    '#f9d77e',          // soft gold
+    '#d4843a',          // amber
+    [0.02, 0.09],
+    'autumn'
+);
+
+// 4. Winter: Cool mist/fog particles, slowly sinking
+createParticleSystem(
+    650,
+    '#dce8f5',          // icy white-blue
+    '#8aa4c8',          // steel blue
+    [0.025, 0.1],
+    'winter'
+);
+
+// For now, only Summer is visible (set by init later), but all are ready.
+// =============================================
+// CHUNK 6 – Full Interaction & Animation (replaces the old animate() entirely)
+// Paste this AFTER all Chunk 5 code and BEFORE 
+// =============================================
+
+// ── Grab DOM elements (needed for UI updates) ──
+const seasonTitle = document.getElementById('seasonTitle');
+const seasonSubtitle = document.getElementById('seasonSubtitle');
+const seasonSanskrit = document.getElementById('seasonSanskrit');
+const seasonTitleContainer = document.getElementById('seasonTitleContainer');
+const footnote = document.getElementById('footnote');
+const scrollDots = document.querySelectorAll('.scroll-dot');
+
+// ── Season Data ──
+const seasons = [
+    {
+        name: 'Grishma', subtitle: 'The Scorching Embrace', sanskrit: 'ग्रीष्म ऋतु',
+        bgColor: '#1a0c04', fogColor: '#3d1e08', fogNear: 3.5, fogFar: 18,
+        ambientColor: '#fff3e0', keyLightColor: '#ffd8a0',
+        mandalaColor: '#e8a840', mandalaEmissive: '#c97020',
+        particleOpacity: { summer: 0.85, monsoon: 0, autumn: 0, winter: 0 }
+    },
+    {
+        name: 'Varsha', subtitle: 'The Sacred Deluge', sanskrit: 'वर्षा ऋतु',
+        bgColor: '#061218', fogColor: '#1a3a4a', fogNear: 3, fogFar: 16,
+        ambientColor: '#d8e8f0', keyLightColor: '#a0c8e0',
+        mandalaColor: '#5ba0c0', mandalaEmissive: '#1e5070',
+        particleOpacity: { summer: 0, monsoon: 0.9, autumn: 0, winter: 0 }
+    },
+    {
+        name: 'Sharad', subtitle: 'The Golden Harvest', sanskrit: 'शरद ऋतु',
+        bgColor: '#0f0a04', fogColor: '#4a3020', fogNear: 4, fogFar: 20,
+        ambientColor: '#fff5e8', keyLightColor: '#ffe0b0',
+        mandalaColor: '#d4a040', mandalaEmissive: '#f0c060',
+        particleOpacity: { summer: 0, monsoon: 0, autumn: 0.9, winter: 0 }
+    },
+    {
+        name: 'Shishir', subtitle: 'The Velvet Chill', sanskrit: 'शिशिर ऋतु',
+        bgColor: '#080c14', fogColor: '#3a4458', fogNear: 3, fogFar: 14,
+        ambientColor: '#e8eef5', keyLightColor: '#c0d0e8',
+        mandalaColor: '#8898b8', mandalaEmissive: '#506080',
+        particleOpacity: { summer: 0, monsoon: 0, autumn: 0, winter: 0.85 }
+    }
+];
+
+// ── State ──
+let smoothScrollProgress = 0;
+let targetScrollProgress = 0;
+let currentSeasonIndex = 0;
+const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+
+// ── Helpers ──
+function lerp(a, b, t) { return a + (b - a) * t; }
+function lerpColor(colorObj, hexA, hexB, t) {
+    const ca = new THREE.Color(hexA);
+    const cb = new THREE.Color(hexB);
+    colorObj.copy(ca).lerp(cb, t);
+}
+function smoothstep(edge0, edge1, x) {
+    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+}
+
+// ── Scroll ──
+function updateScrollProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.body.scrollHeight - window.innerHeight;
+    targetScrollProgress = docHeight > 0 ? scrollTop / docHeight : 0;
+}
+window.addEventListener('scroll', updateScrollProgress, { passive: true });
+
+// ── Mouse / Touch ──
+window.addEventListener('mousemove', e => {
+    mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.ty = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+window.addEventListener('touchmove', e => {
+    if (e.touches.length) {
+        mouse.tx = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+        mouse.ty = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+    }
+}, { passive: true });
+
+// ── Keyboard ──
+window.addEventListener('keydown', e => {
+    const sh = document.body.scrollHeight / 4;
+    let t = window.scrollY;
+    if (e.key === 'ArrowDown' || e.key === 'j') t += sh * 0.5;
+    else if (e.key === 'ArrowUp' || e.key === 'k') t -= sh * 0.5;
+    else if (e.key === 'Home') t = 0;
+    else if (e.key === 'End') t = document.body.scrollHeight;
+    if (t !== window.scrollY) {
+        e.preventDefault();
+        window.scrollTo({ top: Math.max(0, Math.min(document.body.scrollHeight - window.innerHeight, t)), behavior: 'smooth' });
+    }
+});
+
+// ── UI update ──
+function updateSeasonUI(idx) {
+    const s = seasons[idx];
+    seasonTitle.textContent = s.name;
+    seasonSubtitle.textContent = s.subtitle;
+    seasonSanskrit.textContent = s.sanskrit;
+    seasonTitleContainer.style.transform = 'translate(-50%, -50%) scale(1.03)';
+    setTimeout(() => { seasonTitleContainer.style.transform = 'translate(-50%, -50%) scale(1)'; }, 150);
+}
+
+// ── Animation Loop ──
+function animate(timestamp) {
+    requestAnimationFrame(animate);
+    const time = timestamp * 0.001;
+
+    // Smooth scroll
+    smoothScrollProgress = lerp(smoothScrollProgress, targetScrollProgress, 0.06);
+
+    // Season index + blend
+    const totalSeasons = seasons.length;
+    const rawIndex = smoothScrollProgress * totalSeasons;
+    const seasonIndex = Math.floor(rawIndex);
+    const blend = rawIndex - seasonIndex;
+    const safeIdx = Math.min(seasonIndex, totalSeasons - 2);
+    const nextIdx = Math.min(safeIdx + 1, totalSeasons - 1);
+    const cur = seasons[safeIdx];
+    const nxt = seasons[nextIdx];
+
+    // Dominant season (for UI)
+    const dominant = blend > 0.5 ? nextIdx : safeIdx;
+    if (dominant !== currentSeasonIndex) {
+        currentSeasonIndex = dominant;
+        updateSeasonUI(dominant);
+    }
+
+    // Scene colours & fog
+    lerpColor(scene.background, cur.bgColor, nxt.bgColor, blend);
+    scene.fog.color.copy(new THREE.Color(cur.fogColor).lerp(new THREE.Color(nxt.fogColor), blend));
+    scene.fog.near = lerp(cur.fogNear, nxt.fogNear, blend);
+    scene.fog.far = lerp(cur.fogFar, nxt.fogFar, blend);
+
+    // Lighting
+    lerpColor(ambientLight.color, cur.ambientColor, nxt.ambientColor, blend);
+    lerpColor(keyLight.color, cur.keyLightColor, nxt.keyLightColor, blend);
+
+    // Mandala material
+    const mColor = new THREE.Color(cur.mandalaColor).lerp(new THREE.Color(nxt.mandalaColor), blend);
+    icoMat.color.copy(mColor);
+    icoMat.emissive.copy(new THREE.Color(cur.mandalaEmissive).lerp(new THREE.Color(nxt.mandalaEmissive), blend));
+    icoMat.emissiveIntensity = lerp(0.15, 0.55, blend);
+    wireIcoMat.color.copy(mColor).multiplyScalar(1.3);
+    wireIcoMat.opacity = lerp(0.25, 0.5, blend);
+    torusRings.forEach((ring, i) => {
+        const ringCol = new THREE.Color(cur.mandalaColor).lerp(new THREE.Color(nxt.mandalaColor), blend);
+        ring.material.color.copy(ringCol).multiplyScalar(0.85 + i * 0.15);
+        ring.material.emissive.copy(ringCol).multiplyScalar(0.3);
+    });
+
+    // Particle opacities
+    const pKeys = ['summer', 'monsoon', 'autumn', 'winter'];
+    pKeys.forEach((key, idx) => {
+        const sys = particleSystems[key];
+        let target = 0;
+        if (idx === safeIdx) target = cur.particleOpacity[key] * (1 - blend);
+        if (idx === nextIdx) target = Math.max(target, nxt.particleOpacity[key] * blend);
+        if (Math.abs(idx - safeIdx) <= 1) target = Math.max(target, cur.particleOpacity[key] * (1 - blend) * (1 - Math.abs(idx - safeIdx) * 0.7));
+        if (Math.abs(idx - nextIdx) <= 1) target = Math.max(target, nxt.particleOpacity[key] * blend * (1 - Math.abs(idx - nextIdx) * 0.7));
+        sys.targetOpacity = target;
+        sys.currentOpacity = lerp(sys.currentOpacity, sys.targetOpacity, 0.05);
+        sys.points.material.opacity = sys.currentOpacity;
+    });
+
+    // Particle motion
+    pKeys.forEach(key => {
+        const sys = particleSystems[key];
+        const pos = sys.points.geometry.attributes.position.array;
+        const vel = sys.velocities;
+        const base = sys.basePositions;
+        for (let i = 0; i < sys.count; i++) {
+            const i3 = i * 3;
+            if (key === 'summer') {
+                pos[i3 + 1] += vel[i3 + 1] * 0.015;
+                pos[i3] += Math.sin(time * 2 + i * 0.1) * 0.003;
+                if (pos[i3 + 1] > 4.5) pos[i3 + 1] = -4.5;
+            } else if (key === 'monsoon') {
+                pos[i3 + 1] -= Math.abs(vel[i3 + 1]) * 0.06;
+                if (pos[i3 + 1] < -5) { pos[i3 + 1] = 4 + Math.random(); pos[i3] = base[i3] + (Math.random() - 0.5) * 2; }
+            } else if (key === 'autumn') {
+                pos[i3] += Math.sin(time * 1.5 + i * 0.3) * 0.006;
+                pos[i3 + 1] += Math.cos(time * 1.8 + i * 0.4) * 0.005;
+                pos[i3 + 2] += Math.cos(time * 1.3 + i * 0.35) * 0.004;
+                if (Math.abs(pos[i3]) > 5.5) pos[i3] = base[i3];
+            } else if (key === 'winter') {
+                pos[i3 + 1] -= Math.abs(vel[i3 + 1]) * 0.02;
+                pos[i3] += Math.sin(time * 0.7 + i * 0.2) * 0.008;
+                if (pos[i3 + 1] < -4) pos[i3 + 1] = 4.5;
+            }
+        }
+        sys.points.geometry.attributes.position.needsUpdate = true;
+    });
+
+    // Mouse + camera
+    mouse.x = lerp(mouse.x, mouse.tx, 0.04);
+    mouse.y = lerp(mouse.y, mouse.ty, 0.04);
+    mandalaGroup.rotation.y += 0.003 + mouse.x * 0.004;
+    mandalaGroup.rotation.x += 0.0012 + mouse.y * 0.003;
+    mandalaGroup.rotation.z += 0.0008;
+    orbitingSpheres.forEach(s => {
+        const u = s.userData;
+        const angle = time * u.orbitSpeed + u.orbitPhase;
+        s.position.x = Math.cos(angle) * u.orbitRadius;
+        s.position.z = Math.sin(angle) * u.orbitRadius;
+        s.position.y = Math.sin(time * u.orbitSpeed * 0.7 + u.orbitPhase) * u.orbitY;
+    });
+    camera.position.x = lerp(camera.position.x, mouse.x * 0.5, 0.03);
+    camera.position.y = lerp(camera.position.y, 0.5 + mouse.y * 0.35, 0.03);
+    camera.lookAt(0, 0, 0);
+
+    // Footnote
+    if (smoothScrollProgress > 0.92) {
+        const op = smoothstep(0.92, 0.98, smoothScrollProgress);
+        footnote.style.opacity = op;
+        footnote.classList.add('visible');
+        if (smoothScrollProgress > 0.97) seasonTitleContainer.style.opacity = Math.max(0, 1 - (smoothScrollProgress - 0.97) / 0.03);
+    } else {
+        footnote.style.opacity = '0';
+        footnote.classList.remove('visible');
+        seasonTitleContainer.style.opacity = '1';
+    }
+
+    // Dots
+    const dotIdx = Math.round(smoothScrollProgress * 3);
+    scrollDots.forEach((dot, i) => dot.classList.toggle('active', i === dotIdx));
+
+    renderer.render(scene, camera);
+}
+
+// ── Init ──
+updateScrollProgress();
+smoothScrollProgress = targetScrollProgress;
+if (particleSystems['summer']) {
+    particleSystems['summer'].currentOpacity = 0.85;
+    particleSystems['summer'].points.material.opacity = 0.85;
+    particleSystems['summer'].targetOpacity = 0.85;
+}
+requestAnimationFrame(animate);   // start the loop
+
+console.log('🌐 Three.js scene initialized — ready for the mandala.');
+    </script>
+</body>
+</html>
