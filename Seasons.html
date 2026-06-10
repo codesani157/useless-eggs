@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seasons of India — 2026</title>
+    <style>
+        :root {
+            --gold: #c9a55e;
+            --gold-light: #e0c97f;
+            --gold-dark: #8b6914;
+            --cream: #faf7f0;
+            --deep-charcoal: #1a1a1a;
+            --summer-1: #e8732a;
+            --summer-2: #f4b843;
+            --monsoon-1: #1e5f74;
+            --monsoon-2: #3a8fa8;
+            --autumn-1: #c47f3a;
+            --autumn-2: #f2d398;
+            --winter-1: #7b8fb2;
+            --winter-2: #c9d6e8;
+            --font-display: 'Georgia', 'Times New Roman', 'Noto Serif Devanagari', serif;
+            --font-body: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: #0a0a0a;
+        }
+
+        body {
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            cursor: crosshair;
+            background: #0a0a0a;
+            height: 600vh;
+            position: relative;
+        }
+
+        /* Canvas Layer */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Vignette Overlay */
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center,
+                    transparent 55%,
+                    rgba(6, 4, 2, 0.35) 75%,
+                    rgba(2, 1, 0, 0.7) 100%);
+            mix-blend-mode: multiply;
+        }
+
+        /* Film grain */
+        .grain {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            background-size: 180px 180px;
+        }
+
+        /* Season Title Overlay */
+        .season-title-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+            transition: opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .season-title {
+            font-family: var(--font-display);
+            font-size: clamp(3.5rem, 8vw, 9rem);
+            font-weight: 400;
+            letter-spacing: 0.03em;
+            line-height: 1.05;
+            color: #faf7f0;
+            text-shadow: 0 0 120px rgba(201, 165, 94, 0.5), 0 0 40px rgba(0, 0, 0, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.4);
+            transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+            opacity: 1;
+        }
+
+        .season-subtitle {
+            font-family: var(--font-body);
+            font-size: clamp(0.85rem, 1.5vw, 1.2rem);
+            font-weight: 300;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #d4b87a;
+            margin-top: 0.5rem;
+            text-shadow: 0 0 30px rgba(180, 140, 80, 0.5);
+            transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .season-sanskrit {
+            font-family: var(--font-display);
+            font-size: clamp(1.2rem, 2.2vw, 2rem);
+            color: #c9a55e;
+            margin-top: 1.5rem;
+            letter-spacing: 0.08em;
+            opacity: 0.8;
+            transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        /* Scroll indicator dots */
+        .scroll-indicator {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+            pointer-events: none;
+        }
+
+        .scroll-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            transition: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+        }
+
+        .scroll-dot::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 1.5px solid transparent;
+            transition: all 0.6s ease;
+        }
+
+        .scroll-dot.active {
+            background: #c9a55e;
+            box-shadow: 0 0 16px rgba(201, 165, 94, 0.7);
+            width: 10px;
+            height: 10px;
+            margin-left: -1px;
+        }
+
+        .scroll-dot.active::after {
+            border-color: rgba(201, 165, 94, 0.5);
+            inset: -10px;
+            animation: dotPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%,
+            100% {
+                inset: -8px;
+                opacity: 0.4;
+            }
+            50% {
+                inset: -16px;
+                opacity: 0;
+            }
+        }
+
+        /* Footnote */
+        .footnote {
+            position: absolute;
+            bottom: 5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            text-align: center;
+            pointer-events: auto;
+            padding: 3rem 2.5rem;
+            opacity: 0;
+            transition: opacity 1.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            max-width: 700px;
+            width: 90%;
+        }
+
+        .footnote.visible {
+            opacity: 1;
+        }
+
+        .footnote-ornament {
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg,
+                    transparent,
+                    #c9a55e 20%,
+                    #e0c97f 50%,
+                    #c9a55e 80%,
+                    transparent);
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .footnote-ornament::before,
+        .footnote-ornament::after {
+            content: '◆';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #c9a55e;
+            font-size: 0.55rem;
+        }
+        .footnote-ornament::before {
+            left: -28px;
+        }
+        .footnote-ornament::after {
+            right: -28px;
+        }
+
+        .footnote-text {
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 2vw, 1.6rem);
+            color: #e8dcc8;
+            letter-spacing: 0.06em;
+            line-height: 1.7;
+            margin-bottom: 0.8rem;
+        }
+
+        .footnote-sub {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: #8b7a5e;
+        }
+
+        .footnote-seal {
+            display: inline-block;
+            width: 56px;
+            height: 56px;
+            border: 2px solid #c9a55e;
+            border-radius: 50%;
+            margin: 1.5rem auto 0;
+            position: relative;
+            animation: sealGlow 4s ease-in-out infinite;
+        }
+
+        .footnote-seal::after {
+            content: 'ॐ';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: #c9a55e;
+            font-family: var(--font-display);
+        }
+
+        @keyframes sealGlow {
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(201, 165, 94, 0.3), inset 0 0 20px rgba(201, 165, 94, 0.1);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(201, 165, 94, 0.6), inset 0 0 35px rgba(201, 165, 94, 0.2);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .scroll-indicator {
+                right: 0.8rem;
+                gap: 1.1rem;
+            }
+            .scroll-dot {
+                width: 5px;
+                height: 5px;
+            }
+            .scroll-dot.active {
+                width: 7px;
+                height: 7px;
+            }
+            .season-title {
+                font-size: clamp(2.2rem, 7vw, 5rem);
+            }
+            .footnote {
+                padding: 2rem 1.5rem;
+                bottom: 8vh;
+            }
+            body {
+                cursor: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Three.js Canvas -->
+    <canvas id="three-canvas"></canvas>
+
+    <!-- Atmospheric Overlays -->
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <!-- Season Title -->
+    <div class="season-title-container" id="seasonTitleContainer">
+        <div class="season-title" id="seasonTitle">Grishma</div>
+        <div class="season-subtitle" id="seasonSubtitle">The Scorching Embrace</div>
+        <div class="season-sanskrit" id="seasonSanskrit">ग्रीष्म ऋतु</div>
+    </div>
+
+    <!-- Scroll Dots -->
+    <div class="scroll-indicator" id="scrollIndicator">
+        <div class="scroll-dot active" data-index="0"></div>
+        <div class="scroll-dot" data-index="1"></div>
+        <div class="scroll-dot" data-index="2"></div>
+        <div class="scroll-dot" data-index="3"></div>
+    </div>
+
+    <!-- Footnote -->
+    <div class="footnote" id="footnote">
+        <div class="footnote-ornament"></div>
+        <p class="footnote-text">
+            You have journeyed through the soul of a land<br>where time is measured in seasons,<br>and every turn of the earth sings a new raga.
+        </p>
+        <p class="footnote-sub">The Cycle Completes &amp; Begins Anew</p>
+        <div class="footnote-seal"></div>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ──────────────────────────────────────
+        // DOM ELEMENTS
+        // ──────────────────────────────────────
+        const canvas = document.getElementById('three-canvas');
+        const seasonTitle = document.getElementById('seasonTitle');
+        const seasonSubtitle = document.getElementById('seasonSubtitle');
+        const seasonSanskrit = document.getElementById('seasonSanskrit');
+        const seasonTitleContainer = document.getElementById('seasonTitleContainer');
+        const footnote = document.getElementById('footnote');
+        const scrollDots = document.querySelectorAll('.scroll-dot');
+
+        // ──────────────────────────────────────
+        // THREE.JS SETUP
+        // ──────────────────────────────────────
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0.5, 8);
+        camera.lookAt(0, 0, 0);
+
+        // ──────────────────────────────────────
+        // LIGHTING
+        // ──────────────────────────────────────
+        const ambientLight = new THREE.AmbientLight('#fff5e8', 0.9);
+        scene.add(ambientLight);
+
+        const keyLight = new THREE.DirectionalLight('#fffaf0', 2.5);
+        keyLight.position.set(5, 3, 6);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.width = 1024;
+        keyLight.shadow.mapSize.height = 1024;
+        keyLight.shadow.camera.near = 0.5;
+        keyLight.shadow.camera.far = 50;
+        keyLight.shadow.bias = -0.0001;
+        keyLight.shadow.normalBias = 0.02;
+        scene.add(keyLight);
+
+        const rimLight = new THREE.DirectionalLight('#ffd9a3', 1.2);
+        rimLight.position.set(-3, -1, -2);
+        scene.add(rimLight);
+
+        const topLight = new THREE.PointLight('#ffe8cc', 4, 15, 1.5);
+        topLight.position.set(0, 5, 2);
+        scene.add(topLight);
+
+        // ──────────────────────────────────────
+        // CENTRAL MANDALA GROUP
+        // ──────────────────────────────────────
+        const mandalaGroup = new THREE.Group();
+        scene.add(mandalaGroup);
+
+        // Central icosahedron
+        const icoGeom = new THREE.IcosahedronGeometry(0.55, 1);
+        const icoMat = new THREE.MeshStandardMaterial({
+            color: '#d4af37',
+            metalness: 0.85,
+            roughness: 0.2,
+            envMapIntensity: 0.5,
+        });
+        const icoMesh = new THREE.Mesh(icoGeom, icoMat);
+        icoMesh.castShadow = true;
+        icoMesh.receiveShadow = true;
+        mandalaGroup.add(icoMesh);
+
+        // Wireframe outer shell
+        const wireIcoGeom = new THREE.IcosahedronGeometry(0.72, 0);
+        const wireIcoMat = new THREE.MeshBasicMaterial({
+            color: '#e0c97f',
+            wireframe: true,
+            transparent: true,
+            opacity: 0.35,
+        });
+        const wireIco = new THREE.Mesh(wireIcoGeom, wireIcoMat);
+        mandalaGroup.add(wireIco);
+
+        // Torus rings (mandala orbits)
+        const torusRings = [];
+        const ringConfigs = [
+            { radius: 1.05, tube: 0.025, rotation: [Math.PI / 2.2, 0.3, 0], color: '#c9a55e' },
+            { radius: 1.2, tube: 0.018, rotation: [Math.PI / 1.7, -0.5, 0.6], color: '#d4af6f' },
+            { radius: 1.35, tube: 0.022, rotation: [Math.PI / 3, 0.8, -0.4], color: '#b8943d' },
+        ];
+
+        ringConfigs.forEach((cfg) => {
+            const torusGeom = new THREE.TorusGeometry(cfg.radius, cfg.tube, 128, 64);
+            const torusMat = new THREE.MeshStandardMaterial({
+                color: cfg.color,
+                metalness: 0.9,
+                roughness: 0.15,
+                emissive: cfg.color,
+                emissiveIntensity: 0.2,
+            });
+            const torus = new THREE.Mesh(torusGeom, torusMat);
+            torus.rotation.set(...cfg.rotation);
+            torus.castShadow = true;
+            torus.receiveShadow = true;
+            mandalaGroup.add(torus);
+            torusRings.push(torus);
+        });
+
+        // Orbiting small spheres
+        const orbitingSpheres = [];
+        for (let i = 0; i < 12; i++) {
+            const sphereGeom = new THREE.SphereGeometry(0.06, 16, 16);
+            const sphereMat = new THREE.MeshStandardMaterial({
+                color: '#f0d78c',
+                metalness: 0.7,
+                roughness: 0.2,
+                emissive: '#ffd700',
+                emissiveIntensity: 0.4,
+            });
+            const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+            sphere.userData = {
+                orbitRadius: 1.55 + Math.random() * 0.5,
+                orbitSpeed: 0.15 + Math.random() * 0.4,
+                orbitPhase: Math.random() * Math.PI * 2,
+                orbitTilt: (Math.random() - 0.5) * 1.2,
+                orbitY: (Math.random() - 0.5) * 1.8,
+            };
+            mandalaGroup.add(sphere);
+            orbitingSpheres.push(sphere);
+        }
+
+        // ──────────────────────────────────────
+        // SEASONAL PARTICLE SYSTEMS
+        // ──────────────────────────────────────
+        const particleSystems = {};
+        const particleGroup = new THREE.Group();
+        scene.add(particleGroup);
+
+        function createParticleSystem(count, color1, color2, sizeRange, name) {
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const sizes = new Float32Array(count);
+            const velocities = new Float32Array(count * 3);
+            const basePositions = new Float32Array(count * 3);
+
+            const c1 = new THREE.Color(color1);
+            const c2 = new THREE.Color(color2);
+
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                // Spread particles in a large volume
+                const x = (Math.random() - 0.5) * 10;
+                const y = (Math.random() - 0.5) * 8;
+                const z = (Math.random() - 0.5) * 6;
+                positions[i3] = x;
+                positions[i3 + 1] = y;
+                positions[i3 + 2] = z;
+                basePositions[i3] = x;
+                basePositions[i3 + 1] = y;
+                basePositions[i3 + 2] = z;
+                // Velocity
+                velocities[i3] = (Math.random() - 0.5) * 0.3;
+                velocities[i3 + 1] = (Math.random() - 0.5) * 0.5;
+                velocities[i3 + 2] = (Math.random() - 0.5) * 0.3;
+                // Color
+                const mix = Math.random();
+                const col = c1.clone().lerp(c2, mix);
+                colors[i3] = col.r;
+                colors[i3 + 1] = col.g;
+                colors[i3 + 2] = col.b;
+                // Size
+                sizes[i] = sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]);
+            }
+
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            const mat = new THREE.PointsMaterial({
+                size: 0.04,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true,
+                opacity: 0,
+                sizeAttenuation: true,
+            });
+
+            const points = new THREE.Points(geom, mat);
+            points.frustumCulled = false;
+            particleGroup.add(points);
+
+            const system = {
+                points,
+                velocities,
+                basePositions,
+                count,
+                sizeRange,
+                targetOpacity: 0,
+                currentOpacity: 0,
+                name,
+            };
+            particleSystems[name] = system;
+            return system;
+        }
+
+        // Summer: Golden heat particles rising upward
+        createParticleSystem(600, '#f4a742', '#e8732a', [0.02, 0.08], 'summer');
+        // Monsoon: Blue-white rain streaks
+        createParticleSystem(700, '#7ec8e3', '#1e5f74', [0.015, 0.06], 'monsoon');
+        // Autumn: Warm diya/firefly sparkles
+        createParticleSystem(550, '#f9d77e', '#d4843a', [0.02, 0.09], 'autumn');
+        // Winter: Cool mist/fog particles
+        createParticleSystem(650, '#dce8f5', '#8aa4c8', [0.025, 0.1], 'winter');
+
+        // ──────────────────────────────────────
+        // SCENE FOG
+        // ──────────────────────────────────────
+        scene.fog = new THREE.Fog('#1a1008', 4, 22);
+        scene.background = new THREE.Color('#0d0804');
+
+        // ──────────────────────────────────────
+        // STATE
+        // ──────────────────────────────────────
+        let smoothScrollProgress = 0;
+        let targetScrollProgress = 0;
+        let currentSeasonIndex = 0;
+        const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+        let time = 0;
+
+        // ──────────────────────────────────────
+        // SEASON DATA
+        // ─
